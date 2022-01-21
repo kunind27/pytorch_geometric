@@ -1,14 +1,15 @@
 from typing import Optional
 
 import torch
+import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Parameter
-import torch.nn.functional as F
 from torch_scatter import scatter_add
-from torch_geometric.utils import softmax
-from torch_geometric.nn.inits import glorot, zeros
-from torch_geometric.nn.dense.linear import Linear
+
 from torch_geometric.nn.conv import MessagePassing
+from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.nn.inits import glorot, zeros
+from torch_geometric.utils import softmax
 
 
 class HypergraphConv(MessagePassing):
@@ -58,12 +59,20 @@ class HypergraphConv(MessagePassing):
             an additive bias. (default: :obj:`True`)
         **kwargs (optional): Additional arguments of
             :class:`torch_geometric.nn.conv.MessagePassing`.
+
+    Shapes:
+        - **input:**
+          node features :math:`(|\mathcal{V}|, F_{in})`,
+          hyperedge indices :math:`(|\mathcal{V}|, |\mathcal{E}|)`,
+          hyperedge weights :math:`(|\mathcal{E}|)` *(optional)*
+          hyperedge features :math:`(|\mathcal{E}|, D)` *(optional)*
+        - **output:** node features :math:`(|\mathcal{V}|, F_{out})`
     """
     def __init__(self, in_channels, out_channels, use_attention=False, heads=1,
                  concat=True, negative_slope=0.2, dropout=0, bias=True,
                  **kwargs):
         kwargs.setdefault('aggr', 'add')
-        super(HypergraphConv, self).__init__(node_dim=0, **kwargs)
+        super().__init__(node_dim=0, **kwargs)
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -175,7 +184,3 @@ class HypergraphConv(MessagePassing):
             out = alpha.view(-1, self.heads, 1) * out
 
         return out
-
-    def __repr__(self):
-        return "{}({}, {})".format(self.__class__.__name__, self.in_channels,
-                                   self.out_channels)

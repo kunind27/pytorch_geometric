@@ -1,11 +1,10 @@
-from typing import Optional, Union, Tuple, List
-
 from collections import defaultdict
+from typing import List, Optional, Tuple, Union
 
-import torch
 import scipy.sparse
+import torch
 from torch import Tensor
-from torch.utils.dlpack import to_dlpack, from_dlpack
+from torch.utils.dlpack import from_dlpack, to_dlpack
 
 import torch_geometric.data
 
@@ -92,7 +91,7 @@ def to_networkx(data, node_attrs=None, edge_attrs=None, to_undirected=False,
 
     for i, (u, v) in enumerate(data.edge_index.t().tolist()):
 
-        if to_undirected and v > u:
+        if to_undirected and u > v:
             continue
 
         if remove_self_loops and u == v:
@@ -132,7 +131,13 @@ def from_networkx(G, group_node_attrs: Optional[Union[List[str], all]] = None,
 
     G = nx.convert_node_labels_to_integers(G)
     G = G.to_directed() if not nx.is_directed(G) else G
-    edge_index = torch.LongTensor(list(G.edges)).t().contiguous()
+
+    if isinstance(G, (nx.MultiGraph, nx.MultiDiGraph)):
+        edges = list(G.edges(keys=False))
+    else:
+        edges = list(G.edges)
+
+    edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
 
     data = defaultdict(list)
 

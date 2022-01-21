@@ -1,11 +1,12 @@
-from typing import Union, Tuple
-from torch_geometric.typing import OptPairTensor, Adj, Size
+from typing import Tuple, Union
 
-from torch import Tensor
 import torch.nn.functional as F
+from torch import Tensor
 from torch_sparse import SparseTensor, matmul
+
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.typing import Adj, OptPairTensor, Size
 
 
 class SAGEConv(MessagePassing):
@@ -37,10 +38,9 @@ class SAGEConv(MessagePassing):
     """
     def __init__(self, in_channels: Union[int, Tuple[int, int]],
                  out_channels: int, normalize: bool = False,
-                 root_weight: bool = True,
-                 bias: bool = True, **kwargs):  # yapf: disable
+                 root_weight: bool = True, bias: bool = True, **kwargs):
         kwargs.setdefault('aggr', 'mean')
-        super(SAGEConv, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -87,7 +87,3 @@ class SAGEConv(MessagePassing):
                               x: OptPairTensor) -> Tensor:
         adj_t = adj_t.set_value(None, layout=None)
         return matmul(adj_t, x[0], reduce=self.aggr)
-
-    def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
-                                   self.out_channels)

@@ -1,22 +1,24 @@
-import torch
-import time
 import logging
+import time
 
+import torch
+
+from torch_geometric.graphgym.checkpoint import (clean_ckpt, load_ckpt,
+                                                 save_ckpt)
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.loss import compute_loss
-from torch_geometric.graphgym.utils.epoch import is_eval_epoch, \
-    is_ckpt_epoch
-from torch_geometric.graphgym.checkpoint import load_ckpt, save_ckpt, \
-    clean_ckpt
-
 from torch_geometric.graphgym.register import register_train
+from torch_geometric.graphgym.utils.epoch import is_ckpt_epoch, is_eval_epoch
 
 
 def train_epoch(logger, loader, model, optimizer, scheduler):
     if cfg.benchmark:
-        from torch_geometric.graphgym.benchmark import global_line_profiler, \
-            torchprof, get_memory_status, count_parameters, \
-            get_gpu_memory_nvdia, get_model_size
+        from torch_geometric.graphgym.benchmark import (count_parameters,
+                                                        get_gpu_memory_nvdia,
+                                                        get_memory_status,
+                                                        get_model_size,
+                                                        global_line_profiler,
+                                                        torchprof)
     model.train()
     time_start = time.time()
     with torchprof.Profile(model, use_cuda=True, profile_memory=True):
@@ -61,10 +63,12 @@ def eval_epoch(logger, loader, model, split='val'):
         time_start = time.time()
 
 
+@register_train('bench')
 def train(loggers, loaders, model, optimizer, scheduler):
     start_epoch = 0
     if cfg.train.auto_resume:
-        start_epoch = load_ckpt(model, optimizer, scheduler)
+        start_epoch = load_ckpt(model, optimizer, scheduler,
+                                cfg.train.epoch_resume)
     if start_epoch == cfg.optim.max_epoch:
         logging.info('Checkpoint found, Task already done')
     else:
@@ -88,6 +92,3 @@ def train(loggers, loaders, model, optimizer, scheduler):
         clean_ckpt()
 
     logging.info('Task done, results saved in {}'.format(cfg.run_dir))
-
-
-register_train('bench', train)

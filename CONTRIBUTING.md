@@ -36,7 +36,7 @@ To develop PyG on your machine, here are some tips:
 4. Install PyG in editable mode:
 
    ```bash
-   pip install -e .[dev]
+   pip install -e ".[dev,full]"
    ```
 
    This mode will symlink the Python files from the current local source tree into the Python install. Hence, if you modify a Python file, you do not need to reinstall PyG again and again.
@@ -80,20 +80,32 @@ Everytime you send a Pull Request, your commit will be built and checked against
 
    If you do not want to format your code manually, we recommend to use [`yapf`](https://github.com/google/yapf).
 
-2. Ensure that the entire test suite passes and that code coverage roughly stays the same. Please feel encouraged to provide a test with your submitted code.
+2. Ensure that the entire test suite passes and that code coverage roughly stays the same.
+   Please feel encouraged to provide a test with your submitted code.
+   To test, either run
 
    ```bash
    pytest --cov
    ```
+
+   or
+
+   ```bash
+   FULL_TEST=1 pytest --cov
+   ```
+
+   (which runs a set of additional but time-consuming tests) dependening on your needs.
 
 ## Building Documentation
 
 To build the documentation:
 
 1. [Build and install](#developing-pyg) PyG from source.
-2. Install [Sphinx](https://www.sphinx-doc.org/en/master/) via `pip install sphinx sphinx_rtd_theme`.
+2. Install [Sphinx](https://www.sphinx-doc.org/en/master/) theme via
+   ```bash
+   pip install git+https://github.com/pyg-team/pyg_sphinx_theme.git
+   ```
 3. Generate the documentation via:
-
    ```bash
    cd docs
    make html

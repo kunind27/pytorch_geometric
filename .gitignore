@@ -1,12 +1,15 @@
 __pycache__/
+.pytest_cache/
 data/
 build/
 dist/
 alpha/
 runs/
+wandb/
 .cache/
 .eggs/
 lightning_logs/
+outputs/
 graphgym/datasets/
 graphgym/results/
 *.egg-info/

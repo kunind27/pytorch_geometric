@@ -1,5 +1,5 @@
 import copy
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import torch
@@ -41,12 +41,6 @@ class InMemoryDataset(Dataset):
 
     @property
     def processed_file_names(self) -> Union[str, List[str], Tuple]:
-        raise NotImplementedError
-
-    def download(self):
-        raise NotImplementedError
-
-    def process(self):
         raise NotImplementedError
 
     def __init__(self, root: Optional[str] = None,
@@ -125,21 +119,24 @@ class InMemoryDataset(Dataset):
         :obj:`np.ndarray` of type long or bool.
         """
         if idx is None:
-            data_list = [self.get(i) for i in range(len(self))]
+            data_list = [self.get(i) for i in self.indices()]
         else:
             data_list = [self.get(i) for i in self.index_select(idx).indices()]
 
         dataset = copy.copy(self)
         dataset._indices = None
-        dataset._data_list = data_list
+        dataset._data_list = None
         dataset.data, dataset.slices = self.collate(data_list)
         return dataset
 
 
-def nested_iter(mapping: Mapping) -> Iterable:
-    for key, value in mapping.items():
-        if isinstance(value, Mapping):
+def nested_iter(node: Union[Mapping, Sequence]) -> Iterable:
+    if isinstance(node, Mapping):
+        for key, value in node.items():
             for inner_key, inner_value in nested_iter(value):
                 yield inner_key, inner_value
-        else:
-            yield key, value
+    elif isinstance(node, Sequence):
+        for i, inner_value in enumerate(node):
+            yield i, inner_value
+    else:
+        yield None, node

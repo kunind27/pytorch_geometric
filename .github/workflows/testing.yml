@@ -16,10 +16,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.9]
-        torch-version: [1.11.0, 1.12.0]
+        torch-version: [1.12.0]
         include:
-          - torch-version: 1.11.0
-            torchvision-version: 0.12.0
           - torch-version: 1.12.0
             torchvision-version: 0.13.0
 
@@ -37,10 +35,8 @@ jobs:
 
       - name: Install internal dependencies
         run: |
-          pip install torch-scatter -f https://data.pyg.org/whl/torch-${{ matrix.torch-version }}+cpu.html
-          pip install torch-sparse -f https://data.pyg.org/whl/torch-${{ matrix.torch-version }}+cpu.html
-          pip install torch-cluster -f https://data.pyg.org/whl/torch-${{ matrix.torch-version }}+cpu.html
-          pip install torch-spline-conv -f https://data.pyg.org/whl/torch-${{ matrix.torch-version }}+cpu.html
+          pip install pyg-lib -f https://data.pyg.org/whl/nightly/torch-${{ matrix.torch-version }}+cpu.html
+          pip install torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-${{ matrix.torch-version }}+cpu.html
 
       - name: Install main package
         run: |

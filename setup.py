@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-__version__ = '2.0.5'
+__version__ = '2.1.0'
 URL = 'https://github.com/pyg-team/pytorch_geometric'
 
 install_requires = [
@@ -21,6 +21,7 @@ graphgym_requires = [
 ]
 
 full_requires = graphgym_requires + [
+    'ase',
     'h5py',
     'numba',
     'sympy',
@@ -44,6 +45,8 @@ benchmark_requires = [
 test_requires = [
     'pytest',
     'pytest-cov',
+    'onnx',
+    'onnxruntime',
 ]
 
 dev_requires = test_requires + [
@@ -75,5 +78,5 @@ setup(
         'dev': dev_requires,
     },
     packages=find_packages(),
-    include_package_data=True,
+    include_package_data=True,  # Ensure that `*.jinja` files are found.
 )

@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+import warnings
 from itertools import product
 
 import pytest
@@ -9,7 +10,7 @@ import torch.nn.functional as F
 from torch_geometric.loader import NeighborLoader
 from torch_geometric.nn import SAGEConv
 from torch_geometric.nn.models import GAT, GCN, GIN, PNA, EdgeCNN, GraphSAGE
-from torch_geometric.testing import withPackage, withPython
+from torch_geometric.testing import onlyPython, withPackage
 
 out_dims = [None, 8]
 dropouts = [0.0, 0.5]
@@ -138,7 +139,7 @@ def test_basic_gnn_inference(get_dataset, jk):
     assert 'n_id' not in data
 
 
-@withPython('3.7', '3.8', '3.9')  # Packaging does not support Python 3.10 yet.
+@onlyPython('3.7', '3.8', '3.9')  # Packaging does not support Python 3.10 yet.
 def test_packaging():
     os.makedirs(torch.hub._get_torch_home(), exist_ok=True)
 
@@ -171,6 +172,9 @@ def test_onnx():
     import onnx
     import onnxruntime as ort
 
+    warnings.filterwarnings('ignore', '.*shape inference of prim::Constant.*')
+    warnings.filterwarnings('ignore', '.*tensor to a Python boolean.*')
+
     class MyModel(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -184,10 +188,12 @@ def test_onnx():
 
     model = MyModel()
     x = torch.randn(3, 8)
-    edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]])
+    edge_index = torch.tensor([[0, 1, 2], [1, 0, 2]])
+    expected = model(x, edge_index)
+    assert expected.size() == (3, 16)
 
     torch.onnx.export(model, (x, edge_index), 'model.onnx',
-                      input_names=('x', 'edge_index'))
+                      input_names=('x', 'edge_index'), opset_version=16)
 
     model = onnx.load('model.onnx')
     onnx.checker.check_model(model)
@@ -198,6 +204,7 @@ def test_onnx():
         'x': x.numpy(),
         'edge_index': edge_index.numpy()
     })[0]
-    assert out.shape == (3, 16)
+    out = torch.from_numpy(out)
+    assert torch.allclose(out, expected, atol=1e-6)
 
     os.remove('model.onnx')

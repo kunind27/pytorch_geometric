@@ -1,13 +1,12 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 import torch.nn.functional as F
 from torch import Tensor
-from torch_sparse import SparseTensor
 
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.conv.gcn_conv import gcn_norm
 from torch_geometric.nn.dense.linear import Linear
-from torch_geometric.typing import Adj, OptTensor
+from torch_geometric.typing import Adj, OptPairTensor, OptTensor, SparseTensor
 
 
 class FAConv(MessagePassing):
@@ -62,7 +61,7 @@ class FAConv(MessagePassing):
           :math:`((|\mathcal{V}|, F), ((2, |\mathcal{E}|),
           (|\mathcal{E}|)))` if :obj:`return_attention_weights=True`
     """
-    _cached_edge_index: Optional[Tuple[Tensor, Tensor]]
+    _cached_edge_index: Optional[OptPairTensor]
     _cached_adj_t: Optional[SparseTensor]
     _alpha: OptTensor
 
@@ -71,7 +70,7 @@ class FAConv(MessagePassing):
                  normalize: bool = True, **kwargs):
 
         kwargs.setdefault('aggr', 'add')
-        super(FAConv, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self.channels = channels
         self.eps = eps

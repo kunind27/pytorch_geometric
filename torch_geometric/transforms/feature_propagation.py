@@ -1,10 +1,10 @@
 from torch import Tensor
-from torch_sparse import SparseTensor
 
 from torch_geometric.data import Data
 from torch_geometric.data.datapipes import functional_transform
 from torch_geometric.nn.conv.gcn_conv import gcn_norm
 from torch_geometric.transforms import BaseTransform
+from torch_geometric.typing import SparseTensor
 
 
 @functional_transform('feature_propagation')
@@ -22,9 +22,7 @@ class FeaturePropagation(BaseTransform):
 
     where missing node features are inferred by known features via propagation.
 
-    Example:
-
-    .. code-block::
+    .. code-block:: python
 
         from torch_geometric.transforms import FeaturePropagation
 

@@ -1,9 +1,9 @@
 import torch
-from torch_sparse import SparseTensor
 
 from torch_geometric.data import Data
 from torch_geometric.data.datapipes import functional_transform
 from torch_geometric.transforms import BaseTransform
+from torch_geometric.typing import SparseTensor
 
 
 @functional_transform('sign')

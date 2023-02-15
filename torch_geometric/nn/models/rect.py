@@ -2,10 +2,10 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Linear
-from torch_scatter import scatter
 
 from torch_geometric.nn import GCNConv
 from torch_geometric.typing import Adj, OptTensor
+from torch_geometric.utils import scatter
 
 
 class RECT_L(torch.nn.Module):
@@ -25,7 +25,7 @@ class RECT_L(torch.nn.Module):
         in_channels (int): Size of each input sample.
         hidden_channels (int): Intermediate size of each sample.
         normalize (bool, optional): Whether to add self-loops and compute
-            symmetric normalization coefficients on the fly.
+            symmetric normalization coefficients on-the-fly.
             (default: :obj:`True`)
         dropout (float, optional): The dropout probability.
             (default: :obj:`0.0`)
@@ -43,6 +43,7 @@ class RECT_L(torch.nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        r"""Resets all learnable parameters of the module."""
         self.conv.reset_parameters()
         self.lin.reset_parameters()
         torch.nn.init.xavier_uniform_(self.lin.weight.data)

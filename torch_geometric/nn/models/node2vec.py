@@ -4,9 +4,8 @@ import torch
 from torch import Tensor
 from torch.nn import Embedding
 from torch.utils.data import DataLoader
-from torch_sparse import SparseTensor
 
-from torch_geometric.typing import OptTensor
+from torch_geometric.typing import OptTensor, SparseTensor
 from torch_geometric.utils.num_nodes import maybe_num_nodes
 
 try:
@@ -32,7 +31,7 @@ class Node2Vec(torch.nn.Module):
         node2vec.py>`_.
 
     Args:
-        edge_index (LongTensor): The edge indices.
+        edge_index (torch.Tensor): The edge indices.
         embedding_dim (int): The size of each embedding vector.
         walk_length (int): The walk length.
         context_size (int): The actual context size which is considered for
@@ -88,6 +87,7 @@ class Node2Vec(torch.nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        r"""Resets all learnable parameters of the module."""
         self.embedding.reset_parameters()
 
     def forward(self, batch: OptTensor = None) -> Tensor:

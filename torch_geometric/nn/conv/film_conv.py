@@ -6,6 +6,7 @@ from torch.nn import ModuleList, ReLU
 
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.nn.inits import reset
 from torch_geometric.typing import (
     Adj,
     OptTensor,
@@ -14,13 +15,11 @@ from torch_geometric.typing import (
     torch_sparse,
 )
 
-from ..inits import reset
-
 
 class FiLMConv(MessagePassing):
     r"""The FiLM graph convolutional operator from the
     `"GNN-FiLM: Graph Neural Networks with Feature-wise Linear Modulation"
-    <https://arxiv.org/abs/1906.12192>`_ paper
+    <https://arxiv.org/abs/1906.12192>`_ paper.
 
     .. math::
         \mathbf{x}^{\prime}_i = \sum_{r \in \mathcal{R}}
@@ -109,17 +108,22 @@ class FiLMConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        super().reset_parameters()
         for lin, film in zip(self.lins, self.films):
             lin.reset_parameters()
             reset(film)
         self.lin_skip.reset_parameters()
         reset(self.film_skip)
 
-    def forward(self, x: Union[Tensor, PairTensor], edge_index: Adj,
-                edge_type: OptTensor = None) -> Tensor:
-        """"""
+    def forward(
+        self,
+        x: Union[Tensor, PairTensor],
+        edge_index: Adj,
+        edge_type: OptTensor = None,
+    ) -> Tensor:
+
         if isinstance(x, Tensor):
-            x: PairTensor = (x, x)
+            x = (x, x)
 
         beta, gamma = self.film_skip(x[1]).split(self.out_channels, dim=-1)
         out = gamma * self.lin_skip(x[1]) + beta
@@ -130,23 +134,23 @@ class FiLMConv(MessagePassing):
         if self.num_relations <= 1:
             beta, gamma = self.films[0](x[1]).split(self.out_channels, dim=-1)
             out = out + self.propagate(edge_index, x=self.lins[0](x[0]),
-                                       beta=beta, gamma=gamma, size=None)
+                                       beta=beta, gamma=gamma)
         else:
             for i, (lin, film) in enumerate(zip(self.lins, self.films)):
                 beta, gamma = film(x[1]).split(self.out_channels, dim=-1)
                 if isinstance(edge_index, SparseTensor):
-                    edge_type = edge_index.storage.value()
-                    assert edge_type is not None
-                    mask = edge_type == i
+                    _edge_type = edge_index.storage.value()
+                    assert _edge_type is not None
+                    mask = _edge_type == i
                     adj_t = torch_sparse.masked_select_nnz(
                         edge_index, mask, layout='coo')
                     out = out + self.propagate(adj_t, x=lin(x[0]), beta=beta,
-                                               gamma=gamma, size=None)
+                                               gamma=gamma)
                 else:
                     assert edge_type is not None
                     mask = edge_type == i
                     out = out + self.propagate(edge_index[:, mask], x=lin(
-                        x[0]), beta=beta, gamma=gamma, size=None)
+                        x[0]), beta=beta, gamma=gamma)
 
         return out
 

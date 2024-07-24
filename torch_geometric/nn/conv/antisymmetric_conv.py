@@ -14,7 +14,7 @@ from torch_geometric.typing import Adj
 class AntiSymmetricConv(torch.nn.Module):
     r"""The anti-symmetric graph convolutional operator from the
     `"Anti-Symmetric DGN: a stable architecture for Deep Graph Networks"
-    <https://openreview.net/forum?id=J3Y7cgZOOS>`_ paper
+    <https://openreview.net/forum?id=J3Y7cgZOOS>`_ paper.
 
     .. math::
         \mathbf{x}^{\prime}_i = \mathbf{x}_i + \epsilon \cdot \sigma \left(
@@ -73,24 +73,25 @@ class AntiSymmetricConv(torch.nn.Module):
         if phi is None:
             phi = GCNConv(in_channels, in_channels, bias=False)
 
-        self.W = Parameter(torch.Tensor(in_channels, in_channels))
+        self.W = Parameter(torch.empty(in_channels, in_channels))
         self.register_buffer('eye', torch.eye(in_channels))
         self.phi = phi
 
         if bias:
-            self.bias = Parameter(torch.Tensor(in_channels))
+            self.bias = Parameter(torch.empty(in_channels))
         else:
             self.register_parameter('bias', None)
 
         self.reset_parameters()
 
     def reset_parameters(self):
+        r"""Resets all learnable parameters of the module."""
         torch.nn.init.kaiming_uniform_(self.W, a=math.sqrt(5))
         self.phi.reset_parameters()
         zeros(self.bias)
 
     def forward(self, x: Tensor, edge_index: Adj, *args, **kwargs) -> Tensor:
-        """"""
+        r"""Runs the forward pass of the module."""
         antisymmetric_W = self.W - self.W.t() - self.gamma * self.eye
 
         for _ in range(self.num_iters):

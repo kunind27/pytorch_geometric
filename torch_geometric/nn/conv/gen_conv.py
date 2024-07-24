@@ -13,16 +13,9 @@ from torch.nn import (
 from torch_geometric.nn.aggr import Aggregation, MultiAggregation
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.nn.inits import reset
 from torch_geometric.nn.norm import MessageNorm
-from torch_geometric.typing import (
-    Adj,
-    OptPairTensor,
-    OptTensor,
-    Size,
-    SparseTensor,
-)
-
-from ..inits import reset
+from torch_geometric.typing import Adj, OptPairTensor, OptTensor, Size
 
 
 class MLP(Sequential):
@@ -51,7 +44,12 @@ class MLP(Sequential):
 class GENConv(MessagePassing):
     r"""The GENeralized Graph Convolution (GENConv) from the `"DeeperGCN: All
     You Need to Train Deeper GCNs" <https://arxiv.org/abs/2006.07739>`_ paper.
-    Supports SoftMax & PowerMean aggregation. The message construction is:
+
+    :class:`GENConv` supports both :math:`\textrm{softmax}` (see
+    :class:`~torch_geometric.nn.aggr.SoftmaxAggregation`) and
+    :math:`\textrm{powermean}` (see
+    :class:`~torch_geometric.nn.aggr.PowerMeanAggregation`) aggregation.
+    Its message construction is given by:
 
     .. math::
         \mathbf{x}_i^{\prime} = \mathrm{MLP} \left( \mathbf{x}_i +
@@ -189,8 +187,8 @@ class GENConv(MessagePassing):
             self.msg_norm = MessageNorm(learn_msg_scale)
 
     def reset_parameters(self):
+        super().reset_parameters()
         reset(self.mlp)
-        self.aggr_module.reset_parameters()
         if hasattr(self, 'msg_norm'):
             self.msg_norm.reset_parameters()
         if hasattr(self, 'lin_src'):
@@ -204,22 +202,12 @@ class GENConv(MessagePassing):
 
     def forward(self, x: Union[Tensor, OptPairTensor], edge_index: Adj,
                 edge_attr: OptTensor = None, size: Size = None) -> Tensor:
-        """"""
+
         if isinstance(x, Tensor):
-            x: OptPairTensor = (x, x)
+            x = (x, x)
 
         if hasattr(self, 'lin_src'):
             x = (self.lin_src(x[0]), x[1])
-
-        if isinstance(edge_index, SparseTensor):
-            edge_attr = edge_index.storage.value()
-
-        if edge_attr is not None and hasattr(self, 'lin_edge'):
-            edge_attr = self.lin_edge(edge_attr)
-
-        # Node and edge feature dimensionalites need to match.
-        if edge_attr is not None:
-            assert x[0].size(-1) == edge_attr.size(-1)
 
         # propagate_type: (x: OptPairTensor, edge_attr: OptTensor)
         out = self.propagate(edge_index, x=x, edge_attr=edge_attr, size=size)
@@ -228,7 +216,9 @@ class GENConv(MessagePassing):
             out = self.lin_aggr_out(out)
 
         if hasattr(self, 'msg_norm'):
-            out = self.msg_norm(x[1] if x[1] is not None else x[0], out)
+            h = x[1] if x[1] is not None else x[0]
+            assert h is not None
+            out = self.msg_norm(h, out)
 
         x_dst = x[1]
         if x_dst is not None:
@@ -239,6 +229,12 @@ class GENConv(MessagePassing):
         return self.mlp(out)
 
     def message(self, x_j: Tensor, edge_attr: OptTensor) -> Tensor:
+        if edge_attr is not None and hasattr(self, 'lin_edge'):
+            edge_attr = self.lin_edge(edge_attr)
+
+        if edge_attr is not None:
+            assert x_j.size(-1) == edge_attr.size(-1)
+
         msg = x_j if edge_attr is None else x_j + edge_attr
         return msg.relu() + self.eps
 

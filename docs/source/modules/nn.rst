@@ -17,19 +17,15 @@ Convolutional Layers
 --------------------
 
 .. currentmodule:: torch_geometric.nn.conv
+
 .. autosummary::
    :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/nn.rst
+
    {% for name in torch_geometric.nn.conv.classes %}
      {{ name }}
    {% endfor %}
-
-.. autoclass:: torch_geometric.nn.conv.MessagePassing
-   :members:
-
-.. automodule:: torch_geometric.nn.conv
-   :members:
-   :undoc-members:
-   :exclude-members: message, aggregate, message_and_aggregate, update, MessagePassing, training, initialize_parameters
 
 Aggregation Operators
 ---------------------
@@ -139,8 +135,11 @@ For combining via attention, we need to additionally specify the :obj:`in_channe
 
 .. code-block:: python
 
-   multi_aggr = aggr.MultiAggregation(['mean', 'std'], in_channels=64,
-                                      out_channels=64, num_heads=4))
+   multi_aggr = aggr.MultiAggregation(
+       aggrs=['mean', 'std'],
+       mode='attn',
+       mode_kwargs=dict(in_channels=64, out_channels=64, num_heads=4),
+   )
 
 If aggregations are given as a list, they will be automatically resolved to a :class:`~torch_geometric.nn.aggr.MultiAggregation`, *e.g.*, :obj:`aggr=['mean', 'std', 'median']`.
 
@@ -148,7 +147,7 @@ Finally, we added full support for customization of aggregations into the :class
 
 .. note::
 
-   You can read more about the :class:`torch_geometric.nn.aggr` package in this [blog post](https://medium.com/@pytorch_geometric/a-principled-approach-to-aggregations-983c086b10b3).
+   You can read more about the :class:`torch_geometric.nn.aggr` package in this `blog post <https://medium.com/@pytorch_geometric/a-principled-approach-to-aggregations-983c086b10b3>`__.
 
 .. autosummary::
    :nosignatures:
@@ -201,6 +200,7 @@ Models
 ------
 
 .. currentmodule:: torch_geometric.nn.models
+
 .. autosummary::
    :nosignatures:
    :toctree: ../generated

@@ -2,6 +2,10 @@ Introduction by Example
 =======================
 
 We shortly introduce the fundamental concepts of :pyg:`PyG` through self-contained examples.
+
+For an introduction to Graph Machine Learning, we refer the interested reader to the :stanford:`null` `Stanford CS224W: Machine Learning with Graphs <https://www.youtube.com/watch?v=JAB_plj2rbA>`__ lectures.
+For an interactive introduction to :pyg:`PyG`, we recommend our carefully curated :colab:`null` `Google Colab <colabs.html>`__ notebooks.
+
 At its core, :pyg:`PyG` provides the following main features:
 
 .. contents::
@@ -82,7 +86,7 @@ Besides holding a number of node-level, edge-level or graph-level attributes, :c
 
 .. code-block:: python
 
-    print(data.keys)
+    print(data.keys())
     >>> ['x', 'edge_index']
 
     print(data['x'])
@@ -125,7 +129,7 @@ You can find a complete list of all methods at :class:`torch_geometric.data.Data
 Common Benchmark Datasets
 -------------------------
 
-:pyg:`PyG` contains a large number of common benchmark datasets, *e.g.*, all Planetoid datasets (Cora, Citeseer, Pubmed), all graph classification datasets from `http://graphkernels.cs.tu-dortmund.de <http://graphkernels.cs.tu-dortmund.de/>`_ and their `cleaned versions <https://github.com/nd7141/graph_datasets>`_, the QM7 and QM9 dataset, and a handful of 3D mesh/point cloud datasets like FAUST, ModelNet10/40 and ShapeNet.
+:pyg:`PyG` contains a large number of common benchmark datasets, *e.g.*, all Planetoid datasets (Cora, Citeseer, Pubmed), all graph classification datasets from `TUDatasets <https://chrsmrrs.github.io/datasets/>`_ and their `cleaned versions <https://github.com/nd7141/graph_datasets>`_, the QM7 and QM9 dataset, and a handful of 3D mesh/point cloud datasets like FAUST, ModelNet10/40 and ShapeNet.
 
 Initializing a dataset is straightforward.
 An initialization of a dataset will automatically download its raw files and process them to the previously described :class:`~torch_geometric.data.Data` format.
@@ -291,7 +295,7 @@ You can use it to, *e.g.*, average node features in the node dimension for each 
         >>> torch.Size([32, 21])
 
 You can learn more about the internal batching procedure of :pyg:`PyG`, *e.g.*, how to modify its behavior, `here <../advanced/batching.html>`__.
-For documentation of scatter operations, we refer the interested reader to the :obj:`torch-scatter` `documentation <https://pytorch-scatter.readthedocs.io>`_.
+For documentation of scatter operations, we refer the interested reader to the :obj:`torch_scatter` `documentation <https://pytorch-scatter.readthedocs.io>`_.
 
 Data Transforms
 ---------------
@@ -388,7 +392,7 @@ Now let's implement a two-layer GCN:
             return F.log_softmax(x, dim=1)
 
 The constructor defines two :class:`~torch_geometric.nn.conv.GCNConv` layers which get called in the forward pass of our network.
-Note that the non-linearity is not integrated in the :obj:`conv` calls and hence needs to be applied afterwards (something which is consistent accross all operators in :pyg:`PyG`).
+Note that the non-linearity is not integrated in the :obj:`conv` calls and hence needs to be applied afterwards (something which is consistent across all operators in :pyg:`PyG`).
 Here, we chose to use ReLU as our intermediate non-linearity and finally output a softmax distribution over the number of classes.
 Let's train this model on the training nodes for 200 epochs:
 

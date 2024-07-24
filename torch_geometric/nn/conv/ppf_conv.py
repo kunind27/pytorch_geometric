@@ -4,6 +4,7 @@ import torch
 from torch import Tensor
 
 from torch_geometric.nn.conv import MessagePassing
+from torch_geometric.nn.inits import reset
 from torch_geometric.typing import (
     Adj,
     OptTensor,
@@ -13,8 +14,6 @@ from torch_geometric.typing import (
     torch_sparse,
 )
 from torch_geometric.utils import add_self_loops, remove_self_loops
-
-from ..inits import reset
 
 
 def get_angle(v1: Tensor, v2: Tensor) -> Tensor:
@@ -36,7 +35,7 @@ def point_pair_features(pos_i: Tensor, pos_j: Tensor, normal_i: Tensor,
 class PPFConv(MessagePassing):
     r"""The PPFNet operator from the `"PPFNet: Global Context Aware Local
     Features for Robust 3D Point Matching" <https://arxiv.org/abs/1802.02669>`_
-    paper
+    paper.
 
     .. math::
         \mathbf{x}^{\prime}_i = \gamma_{\mathbf{\Theta}} \left( \max_{j \in
@@ -93,6 +92,7 @@ class PPFConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        super().reset_parameters()
         reset(self.local_nn)
         reset(self.global_nn)
 
@@ -103,15 +103,15 @@ class PPFConv(MessagePassing):
         normal: Union[Tensor, PairTensor],
         edge_index: Adj,
     ) -> Tensor:
-        """"""
+
         if not isinstance(x, tuple):
-            x: PairOptTensor = (x, None)
+            x = (x, None)
 
         if isinstance(pos, Tensor):
-            pos: PairTensor = (pos, pos)
+            pos = (pos, pos)
 
         if isinstance(normal, Tensor):
-            normal: PairTensor = (normal, normal)
+            normal = (normal, normal)
 
         if self.add_self_loops:
             if isinstance(edge_index, Tensor):
@@ -121,9 +121,9 @@ class PPFConv(MessagePassing):
             elif isinstance(edge_index, SparseTensor):
                 edge_index = torch_sparse.set_diag(edge_index)
 
-        # propagate_type: (x: PairOptTensor, pos: PairTensor, normal: PairTensor)  # noqa
-        out = self.propagate(edge_index, x=x, pos=pos, normal=normal,
-                             size=None)
+        # propagate_type: (x: PairOptTensor, pos: PairTensor,
+        #                  normal: PairTensor)
+        out = self.propagate(edge_index, x=x, pos=pos, normal=normal)
 
         if self.global_nn is not None:
             out = self.global_nn(out)

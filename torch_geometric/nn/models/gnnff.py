@@ -3,12 +3,11 @@ from torch import Tensor
 from torch.nn import BatchNorm1d, Embedding, Linear, ModuleList, Sequential
 
 from torch_geometric.nn import radius_graph
+from torch_geometric.nn.inits import reset
 from torch_geometric.nn.models.dimenet import triplets
 from torch_geometric.nn.models.schnet import ShiftedSoftplus
 from torch_geometric.typing import OptTensor
 from torch_geometric.utils import scatter
-
-from ..inits import reset
 
 
 class GaussianFilter(torch.nn.Module):
@@ -20,7 +19,6 @@ class GaussianFilter(torch.nn.Module):
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""
-        pass
 
     def forward(self, dist: Tensor) -> Tensor:
         dist = dist.view(-1, 1) - self.offset.view(1, -1)
@@ -187,7 +185,7 @@ class GNNFF(torch.nn.Module):
 
     def forward(self, z: Tensor, pos: Tensor,
                 batch: OptTensor = None) -> Tensor:
-        """"""
+        """"""  # noqa: D419
         edge_index = radius_graph(pos, r=self.cutoff, batch=batch,
                                   max_num_neighbors=self.max_num_neighbors)
 

@@ -5,9 +5,9 @@ Generalizing the convolution operator to irregular domains is typically expresse
 With :math:`\mathbf{x}^{(k-1)}_i \in \mathbb{R}^F` denoting node features of node :math:`i` in layer :math:`(k-1)` and :math:`\mathbf{e}_{j,i} \in \mathbb{R}^D` denoting (optional) edge features from node :math:`j` to node :math:`i`, message passing graph neural networks can be described as
 
 .. math::
-  \mathbf{x}_i^{(k)} = \gamma^{(k)} \left( \mathbf{x}_i^{(k-1)}, \square_{j \in \mathcal{N}(i)} \, \phi^{(k)}\left(\mathbf{x}_i^{(k-1)}, \mathbf{x}_j^{(k-1)},\mathbf{e}_{j,i}\right) \right),
+  \mathbf{x}_i^{(k)} = \gamma^{(k)} \left( \mathbf{x}_i^{(k-1)}, \bigoplus_{j \in \mathcal{N}(i)} \, \phi^{(k)}\left(\mathbf{x}_i^{(k-1)}, \mathbf{x}_j^{(k-1)},\mathbf{e}_{j,i}\right) \right),
 
-where :math:`\square` denotes a differentiable, permutation invariant function, *e.g.*, sum, mean or max, and :math:`\gamma` and :math:`\phi` denote differentiable functions such as MLPs (Multi Layer Perceptrons).
+where :math:`\bigoplus` denotes a differentiable, permutation invariant function, *e.g.*, sum, mean or max, and :math:`\gamma` and :math:`\phi` denote differentiable functions such as MLPs (Multi Layer Perceptrons).
 
 .. contents::
     :local:
@@ -72,7 +72,7 @@ The full layer implementation is shown below:
         def __init__(self, in_channels, out_channels):
             super().__init__(aggr='add')  # "Add" aggregation (Step 5).
             self.lin = Linear(in_channels, out_channels, bias=False)
-            self.bias = Parameter(torch.Tensor(out_channels))
+            self.bias = Parameter(torch.empty(out_channels))
 
             self.reset_parameters()
 
@@ -101,7 +101,7 @@ The full layer implementation is shown below:
             out = self.propagate(edge_index, x=x, norm=norm)
 
             # Step 6: Apply a final bias vector.
-            out += self.bias
+            out = out + self.bias
 
             return out
 

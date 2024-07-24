@@ -1,11 +1,11 @@
 import copy
-from abc import ABC, abstractmethod
 from typing import Any, List, Optional, Union
 
 import numpy as np
 import torch
 from torch import Tensor
 
+import torch_geometric.typing
 from torch_geometric.typing import Adj
 
 
@@ -56,8 +56,11 @@ class InvertibleFunction(torch.autograd.Function):
         # Detaches outputs in-place, allows discarding the intermedate result:
         detached_outputs = tuple(element.detach_() for element in outputs)
 
-        # Clear memory of node features
-        inputs[0].storage().resize_(0)
+        # Clear memory of node features:
+        if torch_geometric.typing.WITH_PT20:
+            inputs[0].untyped_storage().resize_(0)
+        else:  # pragma: no cover
+            inputs[0].storage().resize_(0)
 
         # Store these tensor nodes for backward passes:
         ctx.inputs = [inputs] * num_bwd_passes
@@ -81,13 +84,21 @@ class InvertibleFunction(torch.autograd.Function):
             inputs_inverted = ctx.fn_inverse(*(outputs + inputs[1:]))
             if len(ctx.outputs) == 0:  # Clear memory from outputs:
                 for element in outputs:
-                    element.storage().resize_(0)
+                    if torch_geometric.typing.WITH_PT20:
+                        element.untyped_storage().resize_(0)
+                    else:  # pragma: no cover
+                        element.storage().resize_(0)
 
             if not isinstance(inputs_inverted, tuple):
                 inputs_inverted = (inputs_inverted, )
 
             for elem_orig, elem_inv in zip(inputs, inputs_inverted):
-                elem_orig.storage().resize_(int(np.prod(elem_orig.size())))
+                if torch_geometric.typing.WITH_PT20:
+                    elem_orig.untyped_storage().resize_(
+                        int(np.prod(elem_orig.size())) *
+                        elem_orig.element_size())
+                else:  # pragma: no cover
+                    elem_orig.storage().resize_(int(np.prod(elem_orig.size())))
                 elem_orig.set_(elem_inv)
 
         # Compute gradients with grad enabled:
@@ -133,7 +144,7 @@ class InvertibleFunction(torch.autograd.Function):
         return (None, None, None, None) + gradients
 
 
-class InvertibleModule(torch.nn.Module, ABC):
+class InvertibleModule(torch.nn.Module):
     r"""An abstract class for implementing invertible modules.
 
     Args:
@@ -150,19 +161,17 @@ class InvertibleModule(torch.nn.Module, ABC):
         self.num_bwd_passes = num_bwd_passes
 
     def forward(self, *args):
-        """"""
+        """"""  # noqa: D419
         return self._fn_apply(args, self._forward, self._inverse)
 
     def inverse(self, *args):
         return self._fn_apply(args, self._inverse, self._forward)
 
-    @abstractmethod
     def _forward(self):
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def _inverse(self):
-        pass
+        raise NotImplementedError
 
     def _fn_apply(self, args, fn, fn_inverse):
         if not self.disable:

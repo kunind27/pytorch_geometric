@@ -14,7 +14,7 @@ class CGConv(MessagePassing):
     `"Crystal Graph Convolutional Neural Networks for an
     Accurate and Interpretable Prediction of Material Properties"
     <https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.120.145301>`_
-    paper
+    paper.
 
     .. math::
         \mathbf{x}^{\prime}_i = \mathbf{x}_i + \sum_{j \in \mathcal{N}(i)}
@@ -72,6 +72,7 @@ class CGConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        super().reset_parameters()
         self.lin_f.reset_parameters()
         self.lin_s.reset_parameters()
         if self.bn is not None:
@@ -79,12 +80,12 @@ class CGConv(MessagePassing):
 
     def forward(self, x: Union[Tensor, PairTensor], edge_index: Adj,
                 edge_attr: OptTensor = None) -> Tensor:
-        """"""
+
         if isinstance(x, Tensor):
-            x: PairTensor = (x, x)
+            x = (x, x)
 
         # propagate_type: (x: PairTensor, edge_attr: OptTensor)
-        out = self.propagate(edge_index, x=x, edge_attr=edge_attr, size=None)
+        out = self.propagate(edge_index, x=x, edge_attr=edge_attr)
         out = out if self.bn is None else self.bn(out)
         out = out + x[1]
         return out

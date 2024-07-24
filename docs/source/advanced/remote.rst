@@ -107,7 +107,8 @@ An example usage of the interface is shown below:
     assert torch.equal(row, edge_index[0])
     assert torch.equal(col, edge_index[1])
 
-Common implementations of the :class:`~torch_geometric.data.GraphStore` are graph databases, *e.g.*, :obj:`Neo4j`, :obj:`TigerGraph`, :obj:`ArangoDB` are all viable performant options.
+Common implementations of the :class:`~torch_geometric.data.GraphStore` are graph databases, *e.g.*, :obj:`Neo4j`, :obj:`TigerGraph`, :obj:`ArangoDB`, :obj:`Kùzu` are all viable performant options.
+We provide an example of using :pyg:`PyG` in combination with the :obj:`Kùzu` database `here <https://github.com/pyg-team/pytorch_geometric/tree/master/examples/distributed/kuzu>`__.
 
 A graph sampler is tightly coupled to the given :class:`~torch_geometric.data.GraphStore`, and operates on the :class:`~torch_geometric.data.GraphStore` to produce sampled subgraphs from input nodes.
 Different sampling algorithms are implemented behind the :class:`torch_geometric.sampler.BaseSampler` interface.
@@ -166,4 +167,4 @@ All of the outlined classes speak through common interfaces, making them extensi
 To get started with scalability, we recommend inspecting the interfaces listed above and defining your own :class:`~torch_geometric.data.FeatureStore`, :class:`~torch_geometric.data.GraphStore`, and :class:`~torch_geometric.sampler.BaseSampler` implementations behind them.
 Once a :class:`~torch_geometric.data.FeatureStore`, a :class:`~torch_geometric.data.GraphStore`, and a :class:`~torch_geometric.sampler.BaseSampler` are correctly implemented, simply pass them as parameters to a :class:`~torch_geometric.loader.NodeLoader` or a :class:`~torch_geometric.loader.LinkLoader`, and the rest of :pyg:`PyG` will work seamlessly and similar to any pure in-memory application.
 
-Since this feature is still undergoing heavy development, please feel free to reach out to the :pyg:`PyG` core team either on `GitHub <https://github.com/pyg-team/pytorch_geometric/discussions>`_ or `Slack <https://data.pyg.org/slack.html>`_ if you have any questions, comments or concerns.
+Since this feature is still undergoing heavy development, please feel free to reach out to the :pyg:`PyG` core team either on :github:`null` `GitHub <https://github.com/pyg-team/pytorch_geometric/discussions>`_ or :slack:`null` `Slack <https://data.pyg.org/slack.html>`_ if you have any questions, comments or concerns.

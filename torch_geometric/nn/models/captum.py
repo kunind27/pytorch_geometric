@@ -2,9 +2,6 @@ from typing import Optional, Union
 
 import torch
 
-from torch_geometric.explain.algorithm.captum import \
-    captum_output_to_dicts  # noqa
-from torch_geometric.explain.algorithm.captum import to_captum_input  # noqa
 from torch_geometric.explain.algorithm.captum import (
     CaptumHeteroModel,
     CaptumModel,
@@ -20,7 +17,7 @@ def to_captum_model(
     metadata: Optional[Metadata] = None,
 ) -> Union[CaptumModel, CaptumHeteroModel]:
     r"""Converts a model to a model that can be used for
-    `Captum.ai <https://captum.ai/>`_ attribution methods.
+    `Captum <https://captum.ai/>`_ attribution methods.
 
     Sample code for homogeneous graphs:
 
@@ -82,16 +79,16 @@ def to_captum_model(
 
 
     .. note::
-        For an example of using a Captum attribution method within PyG, see
-        `examples/captum_explainability.py
+        For an example of using a :captum:`Captum` attribution method within
+        :pyg:`PyG`, see `examples/explain/captum_explainer.py
         <https://github.com/pyg-team/pytorch_geometric/blob/master/examples/
-        captum_explainability.py>`_.
+        explain/captum_explainer.py>`_.
 
     Args:
         model (torch.nn.Module): The model to be explained.
         mask_type (str, optional): Denotes the type of mask to be created with
-            a Captum explainer. Valid inputs are :obj:`"edge"`, :obj:`"node"`,
-            and :obj:`"node_and_edge"`. (default: :obj:`"edge"`)
+            a :captum:`Captum` explainer. Valid inputs are :obj:`"edge"`,
+            :obj:`"node"`, and :obj:`"node_and_edge"`. (default: :obj:`"edge"`)
         output_idx (int, optional): Index of the output element (node or link
             index) to be explained. With :obj:`output_idx` set, the forward
             function will return the output of the model for the element at

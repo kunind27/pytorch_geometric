@@ -48,25 +48,39 @@ class RECT_L(torch.nn.Module):
         self.lin.reset_parameters()
         torch.nn.init.xavier_uniform_(self.lin.weight.data)
 
-    def forward(self, x: Tensor, edge_index: Adj,
-                edge_weight: OptTensor = None) -> Tensor:
-        """"""
+    def forward(
+        self,
+        x: Tensor,
+        edge_index: Adj,
+        edge_weight: OptTensor = None,
+    ) -> Tensor:
+        """"""  # noqa: D419
         x = self.conv(x, edge_index, edge_weight)
         x = F.dropout(x, p=self.dropout, training=self.training)
         return self.lin(x)
 
-    @torch.no_grad()
-    def embed(self, x: Tensor, edge_index: Adj,
-              edge_weight: OptTensor = None) -> Tensor:
-        return self.conv(x, edge_index, edge_weight)
+    @torch.jit.export
+    def embed(
+        self,
+        x: Tensor,
+        edge_index: Adj,
+        edge_weight: OptTensor = None,
+    ) -> Tensor:
+        with torch.no_grad():
+            return self.conv(x, edge_index, edge_weight)
 
-    @torch.no_grad()
-    def get_semantic_labels(self, x: Tensor, y: Tensor,
-                            mask: Tensor) -> Tensor:
-        """Replaces the original labels by their class-centers."""
-        y = y[mask]
-        mean = scatter(x[mask], y, dim=0, reduce='mean')
-        return mean[y]
+    @torch.jit.export
+    def get_semantic_labels(
+        self,
+        x: Tensor,
+        y: Tensor,
+        mask: Tensor,
+    ) -> Tensor:
+        r"""Replaces the original labels by their class-centers."""
+        with torch.no_grad():
+            y = y[mask]
+            mean = scatter(x[mask], y, dim=0, reduce='mean')
+            return mean[y]
 
     def __repr__(self) -> str:
         return (f'{self.__class__.__name__}({self.in_channels}, '

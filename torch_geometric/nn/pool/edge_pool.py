@@ -110,7 +110,8 @@ class EdgePooling(torch.nn.Module):
         edge_index: Tensor,
         batch: Tensor,
     ) -> Tuple[Tensor, Tensor, Tensor, UnpoolInfo]:
-        r"""
+        r"""Forward pass.
+
         Args:
             x (torch.Tensor): The node features.
             edge_index (torch.Tensor): The edge indices.
@@ -131,12 +132,12 @@ class EdgePooling(torch.nn.Module):
         e = self.compute_edge_score(e, edge_index, x.size(0))
         e = e + self.add_to_edge_score
 
-        x, edge_index, batch, unpool_info = self.__merge_edges__(
+        x, edge_index, batch, unpool_info = self._merge_edges(
             x, edge_index, batch, e)
 
         return x, edge_index, batch, unpool_info
 
-    def __merge_edges__(
+    def _merge_edges(
         self,
         x: Tensor,
         edge_index: Tensor,

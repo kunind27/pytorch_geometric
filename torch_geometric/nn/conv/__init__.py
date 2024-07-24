@@ -1,4 +1,5 @@
 from .message_passing import MessagePassing
+from .simple_conv import SimpleConv
 from .gcn_conv import GCNConv
 from .cheb_conv import ChebConv
 from .sage_conv import SAGEConv
@@ -24,10 +25,10 @@ from .cugraph.rgcn_conv import CuGraphRGCNConv
 from .rgat_conv import RGATConv
 from .signed_conv import SignedConv
 from .dna_conv import DNAConv
-from .point_conv import PointNetConv, PointConv
+from .point_conv import PointNetConv
 from .gmm_conv import GMMConv
 from .spline_conv import SplineConv
-from .nn_conv import NNConv, ECConv
+from .nn_conv import NNConv
 from .cg_conv import CGConv
 from .edge_conv import EdgeConv, DynamicEdgeConv
 from .x_conv import XConv
@@ -58,9 +59,14 @@ from .ssg_conv import SSGConv
 from .point_gnn_conv import PointGNNConv
 from .gps_conv import GPSConv
 from .antisymmetric_conv import AntiSymmetricConv
+from .dir_gnn_conv import DirGNNConv
+from .mixhop_conv import MixHopConv
+
+import torch_geometric.nn.conv.utils  # noqa
 
 __all__ = [
     'MessagePassing',
+    'SimpleConv',
     'GCNConv',
     'ChebConv',
     'SAGEConv',
@@ -84,17 +90,15 @@ __all__ = [
     'APPNP',
     'MFConv',
     'RGCNConv',
-    'CuGraphRGCNConv',
     'FastRGCNConv',
+    'CuGraphRGCNConv',
     'RGATConv',
     'SignedConv',
     'DNAConv',
     'PointNetConv',
-    'PointConv',
     'GMMConv',
     'SplineConv',
     'NNConv',
-    'ECConv',
     'CGConv',
     'EdgeConv',
     'DynamicEdgeConv',
@@ -125,6 +129,11 @@ __all__ = [
     'PointGNNConv',
     'GPSConv',
     'AntiSymmetricConv',
+    'DirGNNConv',
+    'MixHopConv',
 ]
 
 classes = __all__
+
+ECConv = NNConv
+PointConv = PointNetConv

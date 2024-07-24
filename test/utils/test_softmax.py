@@ -1,7 +1,12 @@
+import pytest
 import torch
 
+import torch_geometric.typing
 from torch_geometric.profile import benchmark
 from torch_geometric.utils import softmax
+
+CALCULATION_VIA_PTR_AVAILABLE = (torch_geometric.typing.WITH_SOFTMAX
+                                 or torch_geometric.typing.WITH_TORCH_SCATTER)
 
 
 def test_softmax():
@@ -11,12 +16,12 @@ def test_softmax():
 
     out = softmax(src, index)
     assert out.tolist() == [0.5, 0.5, 1, 1]
-    assert softmax(src, None, ptr).tolist() == out.tolist()
+    assert softmax(src, ptr=ptr).tolist() == out.tolist()
 
     src = src.view(-1, 1)
     out = softmax(src, index)
     assert out.tolist() == [[0.5], [0.5], [1], [1]]
-    assert softmax(src, None, ptr).tolist() == out.tolist()
+    assert softmax(src, ptr=ptr).tolist() == out.tolist()
 
     jit = torch.jit.script(softmax)
     assert torch.allclose(jit(src, index), out)
@@ -53,11 +58,19 @@ def test_softmax_dim():
 
     src = torch.randn(4, 4)
     assert torch.allclose(softmax(src, index, dim=-1), src.softmax(dim=-1))
-    assert torch.allclose(softmax(src, ptr=ptr, dim=-1), src.softmax(dim=-1))
+    if CALCULATION_VIA_PTR_AVAILABLE:
+        assert torch.allclose(softmax(src, ptr=ptr, dim=-1), src.softmax(-1))
+    else:
+        with pytest.raises(ImportError, match="requires the 'torch-scatter'"):
+            softmax(src, ptr=ptr, dim=-1)
 
     src = torch.randn(4, 4, 16)
     assert torch.allclose(softmax(src, index, dim=1), src.softmax(dim=1))
-    assert torch.allclose(softmax(src, ptr=ptr, dim=1), src.softmax(dim=1))
+    if CALCULATION_VIA_PTR_AVAILABLE:
+        assert torch.allclose(softmax(src, ptr=ptr, dim=1), src.softmax(dim=1))
+    else:
+        with pytest.raises(ImportError, match="requires the 'torch-scatter'"):
+            softmax(src, ptr=ptr, dim=1)
 
 
 if __name__ == '__main__':
@@ -68,19 +81,21 @@ if __name__ == '__main__':
     parser.add_argument('--backward', action='store_true')
     args = parser.parse_args()
 
-    num_nodes, num_edges = 1_000, 50_000
+    num_nodes, num_edges = 10_000, 200_000
     x = torch.randn(num_edges, 64, device=args.device)
     index = torch.randint(num_nodes, (num_edges, ), device=args.device)
+
+    compiled_softmax = torch.compile(softmax)
 
     def dense_softmax(x, index):
         x = x.view(num_nodes, -1, x.size(-1))
         return x.softmax(dim=-1)
 
     benchmark(
-        funcs=[dense_softmax, softmax],
-        func_names=['Dense Softmax', 'Sparse Softmax'],
+        funcs=[dense_softmax, softmax, compiled_softmax],
+        func_names=['Dense Softmax', 'Vanilla', 'Compiled'],
         args=(x, index),
-        num_steps=100 if args.device == 'cpu' else 1000,
-        num_warmups=50 if args.device == 'cpu' else 500,
+        num_steps=50 if args.device == 'cpu' else 500,
+        num_warmups=10 if args.device == 'cpu' else 100,
         backward=args.backward,
     )

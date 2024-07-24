@@ -120,10 +120,10 @@ class GeneralConv(MessagePassing):
         if self.attention:
             if self.attention_type == 'additive':
                 self.att_msg = Parameter(
-                    torch.Tensor(1, self.heads, self.out_channels))
+                    torch.empty(1, self.heads, self.out_channels))
             elif self.attention_type == 'dot_product':
-                self.scaler = torch.sqrt(
-                    torch.tensor(out_channels, dtype=torch.float))
+                scaler = torch.tensor(out_channels, dtype=torch.float).sqrt()
+                self.register_buffer('scaler', scaler)
             else:
                 raise ValueError(
                     f"Attention type '{self.attention_type}' not supported")
@@ -131,6 +131,7 @@ class GeneralConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        super().reset_parameters()
         self.lin_msg.reset_parameters()
         if hasattr(self.lin_self, 'reset_parameters'):
             self.lin_self.reset_parameters()
@@ -139,13 +140,18 @@ class GeneralConv(MessagePassing):
         if self.attention and self.attention_type == 'additive':
             glorot(self.att_msg)
 
-    def forward(self, x: Union[Tensor, OptPairTensor], edge_index: Adj,
-                edge_attr: Tensor = None, size: Size = None) -> Tensor:
-        """"""
+    def forward(
+        self,
+        x: Union[Tensor, OptPairTensor],
+        edge_index: Adj,
+        edge_attr: OptTensor = None,
+        size: Size = None,
+    ) -> Tensor:
+
         if isinstance(x, Tensor):
             x: OptPairTensor = (x, x)
         x_self = x[1]
-        # propagate_type: (x: OptPairTensor)
+        # propagate_type: (x: OptPairTensor, edge_attr: OptTensor)
         out = self.propagate(edge_index, x=x, size=size, edge_attr=edge_attr)
         out = out.mean(dim=1)  # todo: other approach to aggregate heads
         out = out + self.lin_self(x_self)

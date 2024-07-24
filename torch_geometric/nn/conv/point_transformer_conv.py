@@ -4,6 +4,7 @@ from torch import Tensor
 
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.nn.inits import reset
 from torch_geometric.typing import (
     Adj,
     OptTensor,
@@ -13,12 +14,10 @@ from torch_geometric.typing import (
 )
 from torch_geometric.utils import add_self_loops, remove_self_loops, softmax
 
-from ..inits import reset
-
 
 class PointTransformerConv(MessagePassing):
     r"""The Point Transformer layer from the `"Point Transformer"
-    <https://arxiv.org/abs/2012.09164>`_ paper
+    <https://arxiv.org/abs/2012.09164>`_ paper.
 
     .. math::
         \mathbf{x}^{\prime}_i =  \sum_{j \in
@@ -101,6 +100,7 @@ class PointTransformerConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
+        super().reset_parameters()
         reset(self.pos_nn)
         if self.attn_nn is not None:
             reset(self.attn_nn)
@@ -114,16 +114,16 @@ class PointTransformerConv(MessagePassing):
         pos: Union[Tensor, PairTensor],
         edge_index: Adj,
     ) -> Tensor:
-        """"""
+
         if isinstance(x, Tensor):
             alpha = (self.lin_src(x), self.lin_dst(x))
-            x: PairTensor = (self.lin(x), x)
+            x = (self.lin(x), x)
         else:
             alpha = (self.lin_src(x[0]), self.lin_dst(x[1]))
             x = (self.lin(x[0]), x[1])
 
         if isinstance(pos, Tensor):
-            pos: PairTensor = (pos, pos)
+            pos = (pos, pos)
 
         if self.add_self_loops:
             if isinstance(edge_index, Tensor):
@@ -134,7 +134,7 @@ class PointTransformerConv(MessagePassing):
                 edge_index = torch_sparse.set_diag(edge_index)
 
         # propagate_type: (x: PairTensor, pos: PairTensor, alpha: PairTensor)
-        out = self.propagate(edge_index, x=x, pos=pos, alpha=alpha, size=None)
+        out = self.propagate(edge_index, x=x, pos=pos, alpha=alpha)
         return out
 
     def message(self, x_j: Tensor, pos_i: Tensor, pos_j: Tensor,

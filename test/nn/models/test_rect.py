@@ -1,6 +1,9 @@
 import torch
 
+import torch_geometric.typing
 from torch_geometric.nn import RECT_L
+from torch_geometric.testing import is_full_test
+from torch_geometric.typing import SparseTensor
 
 
 def test_rect():
@@ -14,11 +17,28 @@ def test_rect():
 
     out = model(x, edge_index)
     assert out.size() == (6, 8)
+    if torch_geometric.typing.WITH_TORCH_SPARSE:
+        adj = SparseTensor.from_edge_index(edge_index, sparse_sizes=(6, 6))
+        assert torch.allclose(out, model(x, adj.t()), atol=1e-6)
 
     # Test `embed`:
-    out = model.embed(x, edge_index)
-    assert out.size() == (6, 16)
+    embed_out = model.embed(x, edge_index)
+    assert embed_out.size() == (6, 16)
+    if torch_geometric.typing.WITH_TORCH_SPARSE:
+        assert torch.allclose(embed_out, model.embed(x, adj.t()), atol=1e-6)
 
     # Test `get_semantic_labels`:
-    out = model.get_semantic_labels(x, y, mask)
-    assert out.size() == (int(mask.sum()), 8)
+    labels_out = model.get_semantic_labels(x, y, mask)
+    assert labels_out.size() == (int(mask.sum()), 8)
+
+    if is_full_test():
+        jit = torch.jit.script(model)
+        assert torch.allclose(jit(x, edge_index), out, atol=1e-6)
+        assert torch.allclose(embed_out, jit.embed(x, edge_index), atol=1e-6)
+        assert torch.allclose(labels_out, jit.get_semantic_labels(x, y, mask))
+
+        if torch_geometric.typing.WITH_TORCH_SPARSE:
+            assert torch.allclose(jit(x, adj.t()), out, atol=1e-6)
+            assert torch.allclose(embed_out, jit.embed(x, adj.t()), atol=1e-6)
+            assert torch.allclose(labels_out,
+                                  jit.get_semantic_labels(x, y, mask))

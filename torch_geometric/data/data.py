@@ -659,7 +659,13 @@ class Data(BaseData, FeatureStore, GraphStore):
                 return value.get_dim_size()
             return int(value.max()) + 1
         elif 'index' in key or key == 'face':
-            return self.num_nodes
+            num_nodes = self.num_nodes
+            if num_nodes is None:
+                raise RuntimeError(f"Unable to infer 'num_nodes' from the "
+                                   f"attribute '{key}'. Please explicitly set "
+                                   f"'num_nodes' as an attribute of 'data' to "
+                                   f"prevent this error")
+            return num_nodes
         else:
             return 0
 
@@ -1165,7 +1171,7 @@ def size_repr(key: Any, value: Any, indent: int = 0) -> str:
                f'[{value.num_rows}, {value.num_cols}])')
     elif isinstance(value, str):
         out = f"'{value}'"
-    elif isinstance(value, Sequence):
+    elif isinstance(value, (Sequence, set)):
         out = str([len(value)])
     elif isinstance(value, Mapping) and len(value) == 0:
         out = '{}'
